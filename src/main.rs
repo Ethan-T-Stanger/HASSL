@@ -213,7 +213,9 @@ fn increment(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Optio
     program_data.register_value = match program_data.direction {
         Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
         Direction::Left => program_data.register_value.wrapping_add(16),
-        Direction::Right => program_data.register_value.wrapping_add(1),
+        Direction::Right => {
+            (program_data.register_value / 16 * 16) + ((program_data.register_value % 16 + 1) % 16)
+        }
     };
     advance(program_data, file_contents);
     Option::None

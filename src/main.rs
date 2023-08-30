@@ -369,7 +369,7 @@ fn main() {
         .collect::<Vec<char>>();
 
     if file_contents.iter().any(|char| *char == '%') {
-        println!("hassl-Whops!: found an unclosed comment.");
+        println!("hassl-err!: found an unclosed comment.");
         return;
     }
 
@@ -444,14 +444,14 @@ fn main() {
 
     match exit_code {
         ExitCode::Success => return,
-        ExitCode::UnexpectedToken => println!("hassl-Whops!: read an unexpected token."),
-        ExitCode::EndOfFile => println!("hassl-Whops!: reached the end of the file."),
+        ExitCode::UnexpectedToken => println!("hassl-err!: read an unexpected token."),
+        ExitCode::EndOfFile => println!("hassl-err!: reached the end of the file."),
         ExitCode::UnselectedDirection => {
-            println!("hassl-Whops!: attempted operation with unselected direction.")
+            println!("hassl-err!: attempted operation with unselected direction.")
         }
-        ExitCode::StackUnderflow => println!("hassl-Whops!: attempted pop from empty stack."),
-        ExitCode::Input => println!("hassl-Whops!: failed to get user input."),
-        ExitCode::Internal => println!("hassl-Whops!: an internal error occurred."),
+        ExitCode::StackUnderflow => println!("hassl-err!: attempted pop from empty stack."),
+        ExitCode::Input => println!("hassl-err!: failed to get user input."),
+        ExitCode::Internal => println!("hassl-err!: an internal error occurred."),
     }
 }
 

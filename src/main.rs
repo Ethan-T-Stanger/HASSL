@@ -4,14 +4,68 @@ enum ExitCode {
     Success,
     UnexpectedToken,
     EndOfFile,
+    UnselectedDirection,
+    StackUnderflow,
 }
 
-fn terminate(_: &mut usize) -> Option<ExitCode> {
+enum Direction {
+    Unselected,
+    Left,
+    Right,
+}
+
+struct State {
+    file_index: usize,
+    direction: Direction,
+    left_stack: Vec<i8>,
+    right_stack: Vec<i8>,
+    register_value: i8,
+}
+
+fn terminate(_: &mut State) -> Option<ExitCode> {
     Option::Some(ExitCode::Success)
 }
 
-fn advance(file_index: &mut usize) -> Option<ExitCode> {
-    *file_index += 1;
+fn advance(state: &mut State) -> Option<ExitCode> {
+    state.file_index += 1;
+    Option::None
+}
+
+fn push(state: &mut State) -> Option<ExitCode> {
+    match state.direction {
+        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
+        Direction::Left => state.left_stack.push(state.register_value),
+        Direction::Right => state.right_stack.push(state.register_value),
+    }
+    advance(state);
+    Option::None
+}
+
+fn pop(state: &mut State) -> Option<ExitCode> {
+    match state.direction {
+        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
+        Direction::Left => state.register_value = match state.left_stack.pop() {
+            Option::None => return Option::Some(ExitCode::StackUnderflow),
+            Option::Some(value) => value
+        },
+        Direction::Right => state.register_value = match state.right_stack.pop() {
+            Option::None => return Option::Some(ExitCode::StackUnderflow),
+            Option::Some(value) => value
+        },
+    }
+    advance(state);
+    Option::None
+}
+
+fn select_left(state: &mut State) -> Option<ExitCode> {
+    state.direction = Direction::Left;
+    advance(state);
+    Option::None
+}
+
+fn select_right(state: &mut State) -> Option<ExitCode> {
+    state.direction = Direction::Right;
+    advance(state);
     Option::None
 }
 
@@ -31,25 +85,36 @@ fn main() {
         Err(why) => panic!("Failed to read file {}: {}", file_path.display(), why),
         Ok(file_length) => file_length,
     };
-    let file_contents = file_contents.chars().collect::<Vec<char>>();
 
-    let mut file_index = 0;
-    let commands: HashMap<char, fn(&mut usize) -> Option<ExitCode>> = HashMap::from([
-        ('@', terminate as fn(&mut usize) -> Option<ExitCode>),
+    let file_contents = file_contents.chars().collect::<Vec<char>>();
+    let commands = HashMap::from([
+        ('@', terminate as fn(&mut State) -> Option<ExitCode>),
         (' ', advance),
+        ('^', push),
+        ('v', pop),
+        ('<', select_left),
+        ('>', select_right),
     ]);
 
+    let mut state = State {
+        file_index: 0,
+        direction: Direction::Unselected,
+        left_stack: Vec::new(),
+        right_stack: Vec::new(),
+        register_value: 0,
+    };
+
     let exit_code = loop {
-        if file_contents.len() < file_index + 1 {
+        if file_contents.len() < state.file_index + 1 {
             break ExitCode::EndOfFile;
         }
 
-        let function = match commands.get(&file_contents[file_index]) {
+        let function = match commands.get(&file_contents[state.file_index]) {
             None => break ExitCode::UnexpectedToken,
             Some(function) => function,
         };
 
-        match function(&mut file_index) {
+        match function(&mut state) {
             None => (),
             Some(exit_code) => break exit_code,
         }
@@ -57,8 +122,10 @@ fn main() {
 
     match exit_code {
         ExitCode::Success => return,
-        ExitCode::UnexpectedToken => println!("Whops!: read an unexpected token."),
-        ExitCode::EndOfFile => println!("Whops!: reached the end of the file."),
+        ExitCode::UnexpectedToken => println!("hassl-Whops!: read an unexpected token."),
+        ExitCode::EndOfFile => println!("hassl-Whops!: reached the end of the file."),
+        ExitCode::UnselectedDirection => println!("hassl-Whops!: attempted operation with unselected direction."),
+        ExitCode::StackUnderflow => println!("hassl-Whops!: attempted pop from empty stack."),
     }
 }
 

@@ -1,10 +1,1 @@
-0:   % put user input on the stack and inverse the stack %
-     gi*$.
-1:   % check if the right register is not zero, and if so, move to state 3, otherwise move to state 2 %
-     **$#?.***$.&
-2:   % check if the left register is not zero, and if so, decrement it, and decrement the right register before moving to state 3, else, go to state 4 %
-     ****$.(?***************)*$.***************
-3:   % print the first thing on the stack and go to state 1 %
-     ^p*$.&
-4:   % get user input and exit the program %
-     g@
+<**$>***$**$@

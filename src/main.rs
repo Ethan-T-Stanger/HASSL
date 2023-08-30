@@ -16,26 +16,27 @@ enum ExitCode {
     UnselectedDirection,
     StackUnderflow,
     Input,
+    Internal,
 }
 
-// enum State {
-//     State0,
-//     State1,
-//     State2,
-//     State3,
-//     State4,
-//     State5,
-//     State6,
-//     State7,
-//     State8,
-//     State9,
-//     StateA,
-//     StateB,
-//     StateC,
-//     StateD,
-//     StateE,
-//     StateF,
-// }
+enum State {
+    State0,
+    State1,
+    State2,
+    State3,
+    State4,
+    State5,
+    State6,
+    State7,
+    State8,
+    State9,
+    StateA,
+    StateB,
+    StateC,
+    StateD,
+    StateE,
+    StateF,
+}
 
 enum Direction {
     Unselected,
@@ -49,7 +50,7 @@ struct ProgramData {
     left_stack: Vec<u8>,
     right_stack: Vec<u8>,
     register_value: u8,
-    // selected_state: State,
+    selected_state: State,
 }
 
 fn terminate(_: &mut ProgramData) -> Option<ExitCode> {
@@ -58,6 +59,35 @@ fn terminate(_: &mut ProgramData) -> Option<ExitCode> {
 
 fn advance(program_data: &mut ProgramData) -> Option<ExitCode> {
     program_data.file_index += 1;
+    Option::None
+}
+
+fn set_state(program_data: &mut ProgramData) -> Option<ExitCode> {
+    let value = match program_data.direction {
+        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
+        Direction::Left => program_data.register_value / 16,
+        Direction::Right => program_data.register_value % 16,
+    };
+    program_data.selected_state = match value {
+        0 => State::State0,
+        1 => State::State1,
+        2 => State::State2,
+        3 => State::State3,
+        4 => State::State4,
+        5 => State::State5,
+        6 => State::State6,
+        7 => State::State7,
+        8 => State::State8,
+        9 => State::State9,
+        10 => State::StateA,
+        11 => State::StateB,
+        12 => State::StateC,
+        13 => State::StateD,
+        14 => State::StateE,
+        15 => State::StateF,
+        _ => return Option::Some(ExitCode::Internal),
+    };
+    advance(program_data);
     Option::None
 }
 
@@ -260,6 +290,7 @@ fn main() {
     let commands = HashMap::from([
         ('@', terminate as fn(&mut ProgramData) -> Option<ExitCode>),
         (' ', advance),
+        ('$', set_state),
         ('^', push),
         ('v', pop),
         ('g', line_input),
@@ -297,7 +328,7 @@ fn main() {
         left_stack: Vec::new(),
         right_stack: Vec::new(),
         register_value: 0,
-        // selected_state: State::State0,
+        selected_state: State::State0,
     };
 
     let exit_code = loop {
@@ -325,6 +356,7 @@ fn main() {
         }
         ExitCode::StackUnderflow => println!("hassl-Whops!: attempted pop from empty stack."),
         ExitCode::Input => println!("hassl-Whops!: failed to get user input."),
+        ExitCode::Internal => println!("hassl-Whops!: an internal error occurred.")
     }
 }
 

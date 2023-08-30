@@ -8,15 +8,8 @@
      >.p                      %   %
      *******<***p             % W %
      *>********p              % o %
-     *>***p                   % r %
-     .************<.******p   % l %
+     ***<*p                   % r %
+     .******>.************p   % l %
      >.****p                  % d %
-                              % 21 %
-                              % 10 %
-     fg@                 % flushes the print buffer and waits for user input before exiting the program %
-
-0:
-     >********<****>p.*****<.******>p.************<.******>p.
-     ************<.******>p.***************<.******>p.<.**>p.
-     *******<.*****>p.***************<.******>p.**<.*******>p.
-     ************<.******>p.****<.******>p.*<.**>pfg@
+     .*<.**p                  % ! %
+     fg@                      % flushes the print buffer and waits for user input before exiting the program %

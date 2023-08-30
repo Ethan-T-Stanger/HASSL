@@ -53,16 +53,16 @@ struct ProgramData {
     selected_state: State,
 }
 
-fn terminate(_: &mut ProgramData) -> Option<ExitCode> {
+fn terminate(_: &mut ProgramData, _: &Vec<char>) -> Option<ExitCode> {
     Option::Some(ExitCode::Success)
 }
 
-fn advance(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn advance(program_data: &mut ProgramData, _: &Vec<char>) -> Option<ExitCode> {
     program_data.file_index += 1;
     Option::None
 }
 
-fn set_state(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn set_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     let value = match program_data.direction {
         Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
         Direction::Left => program_data.register_value / 16,
@@ -87,30 +87,71 @@ fn set_state(program_data: &mut ProgramData) -> Option<ExitCode> {
         15 => State::StateF,
         _ => return Option::Some(ExitCode::Internal),
     };
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn push(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn go_to_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+    program_data.file_index = match file_contents
+        .iter()
+        .skip(program_data.file_index)
+        .position(|c| *c == state_to_char(&program_data.selected_state))
+    {
+        None => {
+            match file_contents
+                .iter()
+                .position(|c| *c == state_to_char(&program_data.selected_state))
+            {
+                None => return Option::Some(ExitCode::Internal),
+                Some(value) => value + 1,
+            }
+        }
+        Some(value) => program_data.file_index + value + 1,
+    };
+    Option::None
+}
+
+fn state_to_char(state: &State) -> char {
+    return match state {
+        State::State0 => '0',
+        State::State1 => '1',
+        State::State2 => '2',
+        State::State3 => '3',
+        State::State4 => '4',
+        State::State5 => '5',
+        State::State6 => '6',
+        State::State7 => '7',
+        State::State8 => '8',
+        State::State9 => '9',
+        State::StateA => 'A',
+        State::StateB => 'B',
+        State::StateC => 'C',
+        State::StateD => 'D',
+        State::StateE => 'E',
+        State::StateF => 'F',
+    };
+}
+
+fn push(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     let register_value = program_data.register_value;
     match get_stack(program_data) {
         Err(exit_code) => return Option::Some(exit_code),
         Ok(stack) => stack.push(register_value),
     }
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn pop(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn pop(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     match get_stack_value(program_data) {
         Err(exit_code) => return Option::Some(exit_code),
         Ok(value) => program_data.register_value = value,
     };
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn line_input(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn line_input(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     let stack = match get_stack(program_data) {
         Err(exit_code) => return Option::Some(exit_code),
         Ok(stack) => stack,
@@ -126,65 +167,65 @@ fn line_input(program_data: &mut ProgramData) -> Option<ExitCode> {
             Ok(value) => value,
         })
     });
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn select_left(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn select_left(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     program_data.direction = Direction::Left;
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn select_right(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn select_right(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     program_data.direction = Direction::Right;
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn increment(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn increment(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     program_data.register_value = match program_data.direction {
         Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
         Direction::Left => program_data.register_value.wrapping_add(16),
         Direction::Right => program_data.register_value.wrapping_add(1),
     };
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn reset(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn reset(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     program_data.register_value = match program_data.direction {
         Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
         Direction::Left => program_data.register_value % 16,
         Direction::Right => program_data.register_value / 16 * 16,
     };
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn add(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn add(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     match get_stack_values(program_data) {
         Err(exit_code) => return Option::Some(exit_code),
         Ok((first_value, second_value)) => {
             program_data.register_value = first_value.wrapping_add(second_value)
         }
     };
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn subtract(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn subtract(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     match get_stack_values(program_data) {
         Err(exit_code) => return Option::Some(exit_code),
         Ok((first_value, second_value)) => {
             program_data.register_value = first_value.wrapping_sub(second_value)
         }
     };
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn count(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn count(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     match get_stack(program_data) {
         Err(exit_code) => return Option::Some(exit_code),
         Ok(stack) => {
@@ -194,11 +235,11 @@ fn count(program_data: &mut ProgramData) -> Option<ExitCode> {
             }
         }
     }
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn print(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn print(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     print!(
         "{}",
         if program_data.register_value.is_ascii() {
@@ -207,19 +248,19 @@ fn print(program_data: &mut ProgramData) -> Option<ExitCode> {
             char::REPLACEMENT_CHARACTER
         }
     );
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn numeric_print(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn numeric_print(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     print!("{}", program_data.register_value);
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
-fn generate_random(program_data: &mut ProgramData) -> Option<ExitCode> {
+fn generate_random(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     program_data.register_value = random();
-    advance(program_data);
+    advance(program_data, file_contents);
     Option::None
 }
 
@@ -288,9 +329,13 @@ fn main() {
     }
 
     let commands = HashMap::from([
-        ('@', terminate as fn(&mut ProgramData) -> Option<ExitCode>),
+        (
+            '@',
+            terminate as fn(&mut ProgramData, &Vec<char>) -> Option<ExitCode>,
+        ),
         (' ', advance),
         ('$', set_state),
+        ('&', go_to_state),
         ('^', push),
         ('v', pop),
         ('g', line_input),
@@ -336,12 +381,14 @@ fn main() {
             break ExitCode::EndOfFile;
         }
 
+        println!("{}", program_data.file_index);
+
         let function = match commands.get(&file_contents[program_data.file_index]) {
             None => break ExitCode::UnexpectedToken,
             Some(function) => function,
         };
 
-        match function(&mut program_data) {
+        match function(&mut program_data, &file_contents) {
             None => (),
             Some(exit_code) => break exit_code,
         }
@@ -356,7 +403,7 @@ fn main() {
         }
         ExitCode::StackUnderflow => println!("hassl-Whops!: attempted pop from empty stack."),
         ExitCode::Input => println!("hassl-Whops!: failed to get user input."),
-        ExitCode::Internal => println!("hassl-Whops!: an internal error occurred.")
+        ExitCode::Internal => println!("hassl-Whops!: an internal error occurred."),
     }
 }
 

@@ -17,9 +17,9 @@ enum Direction {
 struct State {
     file_index: usize,
     direction: Direction,
-    left_stack: Vec<i8>,
-    right_stack: Vec<i8>,
-    register_value: i8,
+    left_stack: Vec<u8>,
+    right_stack: Vec<u8>,
+    register_value: u8,
 }
 
 fn terminate(_: &mut State) -> Option<ExitCode> {
@@ -69,6 +69,26 @@ fn select_right(state: &mut State) -> Option<ExitCode> {
     Option::None
 }
 
+fn increment(state: &mut State) -> Option<ExitCode> {
+    state.register_value = match state.direction {
+        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
+        Direction::Left => state.register_value.wrapping_add(16),
+        Direction::Right => state.register_value.wrapping_add(1),
+    };
+    advance(state);
+    Option::None
+}
+
+fn reset(state: &mut State) -> Option<ExitCode> {
+    state.register_value = match state.direction {
+        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
+        Direction::Left => state.register_value % 16,
+        Direction::Right => state.register_value / 16 * 16,
+    };
+    advance(state);
+    Option::None
+}
+
 fn main() {
     let file_path = match get_file_path() {
         Option::None => return,
@@ -94,6 +114,8 @@ fn main() {
         ('v', pop),
         ('<', select_left),
         ('>', select_right),
+        ('*', increment),
+        ('.', reset),
     ]);
 
     let mut state = State {

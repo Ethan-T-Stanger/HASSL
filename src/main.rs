@@ -32,31 +32,20 @@ fn advance(state: &mut State) -> Option<ExitCode> {
 }
 
 fn push(state: &mut State) -> Option<ExitCode> {
-    match state.direction {
-        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
-        Direction::Left => state.left_stack.push(state.register_value),
-        Direction::Right => state.right_stack.push(state.register_value),
+    let register_value = state.register_value;
+    match get_stack(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(stack) => stack.push(register_value),
     }
     advance(state);
     Option::None
 }
 
 fn pop(state: &mut State) -> Option<ExitCode> {
-    match state.direction {
-        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
-        Direction::Left => {
-            state.register_value = match state.left_stack.pop() {
-                Option::None => return Option::Some(ExitCode::StackUnderflow),
-                Option::Some(value) => value,
-            }
-        }
-        Direction::Right => {
-            state.register_value = match state.right_stack.pop() {
-                Option::None => return Option::Some(ExitCode::StackUnderflow),
-                Option::Some(value) => value,
-            }
-        }
-    }
+    match get_stack_value(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(value) => state.register_value = value,
+    };
     advance(state);
     Option::None
 }
@@ -83,21 +72,20 @@ fn subtract(state: &mut State) -> Option<ExitCode> {
     Option::None
 }
 
-fn get_stack_values(state: &mut State) -> Result<(u8, u8), ExitCode> {
-    let stack = match state.direction {
-        Direction::Unselected => return Err(ExitCode::UnselectedDirection),
-        Direction::Left => &mut state.left_stack,
-        Direction::Right => &mut state.right_stack,
-    };
-    let first_value = match stack.pop() {
-        None => return Err(ExitCode::StackUnderflow),
-        Some(value) => value,
-    };
-    let second_value = match stack.pop() {
-        None => return Err(ExitCode::StackUnderflow),
-        Some(value) => value,
-    };
-    Ok((first_value, second_value))
+fn print(state: &mut State) -> Option<ExitCode> {
+    match get_stack_value(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(value) => print!(
+            "{}",
+            if value.is_ascii() {
+                value as char
+            } else {
+                char::REPLACEMENT_CHARACTER
+            }
+        ),
+    }
+    advance(state);
+    Option::None
 }
 
 fn select_left(state: &mut State) -> Option<ExitCode> {
@@ -132,6 +120,42 @@ fn reset(state: &mut State) -> Option<ExitCode> {
     Option::None
 }
 
+fn get_stack(state: &mut State) -> Result<&mut Vec<u8>, ExitCode> {
+    let stack = match state.direction {
+        Direction::Unselected => return Err(ExitCode::UnselectedDirection),
+        Direction::Left => &mut state.left_stack,
+        Direction::Right => &mut state.right_stack,
+    };
+    Ok(stack)
+}
+
+fn get_stack_value(state: &mut State) -> Result<u8, ExitCode> {
+    let stack = match get_stack(state) {
+        Err(exit_code) => return Err(exit_code),
+        Ok(stack) => stack,
+    };
+    match stack.pop() {
+        None => return Err(ExitCode::StackUnderflow),
+        Some(value) => Ok(value),
+    }
+}
+
+fn get_stack_values(state: &mut State) -> Result<(u8, u8), ExitCode> {
+    let stack = match get_stack(state) {
+        Err(exit_code) => return Err(exit_code),
+        Ok(stack) => stack,
+    };
+    let first_value = match stack.pop() {
+        None => return Err(ExitCode::StackUnderflow),
+        Some(value) => value,
+    };
+    let second_value = match stack.pop() {
+        None => return Err(ExitCode::StackUnderflow),
+        Some(value) => value,
+    };
+    Ok((first_value, second_value))
+}
+
 fn main() {
     let file_path = match get_file_path() {
         Option::None => return,
@@ -157,6 +181,7 @@ fn main() {
         ('v', pop),
         ('+', add),
         ('-', subtract),
+        ('p', print),
         ('<', select_left),
         ('>', select_right),
         ('*', increment),

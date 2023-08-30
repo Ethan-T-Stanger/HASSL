@@ -44,14 +44,18 @@ fn push(state: &mut State) -> Option<ExitCode> {
 fn pop(state: &mut State) -> Option<ExitCode> {
     match state.direction {
         Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
-        Direction::Left => state.register_value = match state.left_stack.pop() {
-            Option::None => return Option::Some(ExitCode::StackUnderflow),
-            Option::Some(value) => value
-        },
-        Direction::Right => state.register_value = match state.right_stack.pop() {
-            Option::None => return Option::Some(ExitCode::StackUnderflow),
-            Option::Some(value) => value
-        },
+        Direction::Left => {
+            state.register_value = match state.left_stack.pop() {
+                Option::None => return Option::Some(ExitCode::StackUnderflow),
+                Option::Some(value) => value,
+            }
+        }
+        Direction::Right => {
+            state.register_value = match state.right_stack.pop() {
+                Option::None => return Option::Some(ExitCode::StackUnderflow),
+                Option::Some(value) => value,
+            }
+        }
     }
     advance(state);
     Option::None
@@ -146,7 +150,9 @@ fn main() {
         ExitCode::Success => return,
         ExitCode::UnexpectedToken => println!("hassl-Whops!: read an unexpected token."),
         ExitCode::EndOfFile => println!("hassl-Whops!: reached the end of the file."),
-        ExitCode::UnselectedDirection => println!("hassl-Whops!: attempted operation with unselected direction."),
+        ExitCode::UnselectedDirection => {
+            println!("hassl-Whops!: attempted operation with unselected direction.")
+        }
         ExitCode::StackUnderflow => println!("hassl-Whops!: attempted pop from empty stack."),
     }
 }

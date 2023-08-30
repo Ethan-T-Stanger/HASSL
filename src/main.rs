@@ -7,6 +7,7 @@ use std::{
 };
 
 use rand::random;
+use regex::Regex;
 
 enum ExitCode {
     Success,
@@ -16,6 +17,25 @@ enum ExitCode {
     StackUnderflow,
     Input,
 }
+
+// enum State {
+//     State0,
+//     State1,
+//     State2,
+//     State3,
+//     State4,
+//     State5,
+//     State6,
+//     State7,
+//     State8,
+//     State9,
+//     StateA,
+//     StateB,
+//     StateC,
+//     StateD,
+//     StateE,
+//     StateF,
+// }
 
 enum Direction {
     Unselected,
@@ -29,6 +49,7 @@ struct ProgramData {
     left_stack: Vec<u8>,
     right_stack: Vec<u8>,
     register_value: u8,
+    // selected_state: State,
 }
 
 fn terminate(_: &mut ProgramData) -> Option<ExitCode> {
@@ -220,12 +241,22 @@ fn main() {
     };
 
     let mut file_contents = String::new();
-    let _file_length = match file.read_to_string(&mut file_contents) {
+    match file.read_to_string(&mut file_contents) {
         Err(why) => panic!("Failed to read file {}: {}", file_path.display(), why),
-        Ok(file_length) => file_length,
+        Ok(_) => (),
     };
+    let regex = Regex::new(r"(%.*%)").unwrap();
 
-    let file_contents = file_contents.chars().collect::<Vec<char>>();
+    let file_contents = String::from(regex.replace_all(&file_contents, ""))
+        .chars()
+        .filter(|char| *char != ' ' && *char != '\t' && *char != '\n' && *char != ':')
+        .collect::<Vec<char>>();
+
+    if file_contents.iter().any(|char| *char == '%') {
+        println!("hassl-Whops!: found an unclosed comment.");
+        return;
+    }
+
     let commands = HashMap::from([
         ('@', terminate as fn(&mut ProgramData) -> Option<ExitCode>),
         (' ', advance),
@@ -242,6 +273,22 @@ fn main() {
         ('#', count),
         ('p', print),
         ('~', generate_random),
+        ('0', advance),
+        ('1', advance),
+        ('2', advance),
+        ('3', advance),
+        ('4', advance),
+        ('5', advance),
+        ('6', advance),
+        ('7', advance),
+        ('8', advance),
+        ('9', advance),
+        ('A', advance),
+        ('B', advance),
+        ('C', advance),
+        ('D', advance),
+        ('E', advance),
+        ('F', advance),
     ]);
 
     let mut program_data = ProgramData {
@@ -250,6 +297,7 @@ fn main() {
         left_stack: Vec::new(),
         right_stack: Vec::new(),
         register_value: 0,
+        // selected_state: State::State0,
     };
 
     let exit_code = loop {

@@ -100,6 +100,15 @@ fn print(state: &mut State) -> Option<ExitCode> {
     Option::None
 }
 
+fn numeric_print(state: &mut State) -> Option<ExitCode> {
+    match get_stack_value(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(value) => print!("{}", value)
+    }
+    advance(state);
+    Option::None
+}
+
 fn select_left(state: &mut State) -> Option<ExitCode> {
     state.direction = Direction::Left;
     advance(state);
@@ -195,6 +204,7 @@ fn main() {
         ('-', subtract),
         ('#', count),
         ('p', print),
+        ('n', numeric_print),
         ('<', select_left),
         ('>', select_right),
         ('*', increment),

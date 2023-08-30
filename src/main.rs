@@ -62,6 +62,52 @@ fn advance(program_data: &mut ProgramData, _: &Vec<char>) -> Option<ExitCode> {
     Option::None
 }
 
+fn continue_if(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+    match get_register_value(program_data) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(value) => {
+            return if value == 0 {
+                go_to_state(program_data, file_contents)
+            } else {
+                advance(program_data, file_contents)
+            }
+        }
+    }
+}
+
+fn continue_not(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+    match get_register_value(program_data) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(value) => {
+            return if value == 0 {
+                advance(program_data, file_contents)
+            } else {
+                go_to_state(program_data, file_contents)
+            }
+        }
+    }
+}
+
+fn go_to_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+    program_data.file_index = match file_contents
+        .iter()
+        .skip(program_data.file_index)
+        .position(|c| *c == state_to_char(&program_data.selected_state))
+    {
+        None => {
+            match file_contents
+                .iter()
+                .position(|c| *c == state_to_char(&program_data.selected_state))
+            {
+                None => return Option::Some(ExitCode::Internal),
+                Some(value) => value + 1,
+            }
+        }
+        Some(value) => program_data.file_index + value + 1,
+    };
+    Option::None
+}
+
 fn set_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     let value = match program_data.direction {
         Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
@@ -88,26 +134,6 @@ fn set_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Optio
         _ => return Option::Some(ExitCode::Internal),
     };
     advance(program_data, file_contents);
-    Option::None
-}
-
-fn go_to_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
-    program_data.file_index = match file_contents
-        .iter()
-        .skip(program_data.file_index)
-        .position(|c| *c == state_to_char(&program_data.selected_state))
-    {
-        None => {
-            match file_contents
-                .iter()
-                .position(|c| *c == state_to_char(&program_data.selected_state))
-            {
-                None => return Option::Some(ExitCode::Internal),
-                Some(value) => value + 1,
-            }
-        }
-        Some(value) => program_data.file_index + value + 1,
-    };
     Option::None
 }
 
@@ -300,6 +326,14 @@ fn get_stack_values(program_data: &mut ProgramData) -> Result<(u8, u8), ExitCode
     Ok((first_value, second_value))
 }
 
+fn get_register_value(program_data: &mut ProgramData) -> Result<u8, ExitCode> {
+    match program_data.direction {
+        Direction::Unselected => Err(ExitCode::UnselectedDirection),
+        Direction::Left => Ok(program_data.register_value / 16),
+        Direction::Right => Ok(program_data.register_value & 16),
+    }
+}
+
 fn main() {
     let file_path = match get_file_path() {
         Option::None => return,
@@ -334,8 +368,10 @@ fn main() {
             terminate as fn(&mut ProgramData, &Vec<char>) -> Option<ExitCode>,
         ),
         (' ', advance),
-        ('$', set_state),
         ('&', go_to_state),
+        ('?', continue_if),
+        ('!', continue_not),
+        ('$', set_state),
         ('^', push),
         ('v', pop),
         ('g', line_input),
@@ -380,8 +416,6 @@ fn main() {
         if file_contents.len() < program_data.file_index + 1 {
             break ExitCode::EndOfFile;
         }
-
-        println!("{}", program_data.file_index);
 
         let function = match commands.get(&file_contents[program_data.file_index]) {
             None => break ExitCode::UnexpectedToken,

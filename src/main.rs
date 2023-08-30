@@ -72,6 +72,18 @@ fn subtract(state: &mut State) -> Option<ExitCode> {
     Option::None
 }
 
+fn count(state: &mut State) -> Option<ExitCode> {
+    match get_stack(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(stack) => stack.push(match u8::try_from(stack.len()) {
+            Err(_) => 255,
+            Ok(value) => value,
+        }),
+    }
+    advance(state);
+    Option::None
+}
+
 fn print(state: &mut State) -> Option<ExitCode> {
     match get_stack_value(state) {
         Err(exit_code) => return Option::Some(exit_code),
@@ -181,6 +193,7 @@ fn main() {
         ('v', pop),
         ('+', add),
         ('-', subtract),
+        ('#', count),
         ('p', print),
         ('<', select_left),
         ('>', select_right),

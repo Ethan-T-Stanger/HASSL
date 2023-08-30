@@ -61,6 +61,45 @@ fn pop(state: &mut State) -> Option<ExitCode> {
     Option::None
 }
 
+fn add(state: &mut State) -> Option<ExitCode> {
+    match get_stack_values(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok((first_value, second_value)) => {
+            state.register_value = first_value.wrapping_add(second_value)
+        }
+    };
+    advance(state);
+    Option::None
+}
+
+fn subtract(state: &mut State) -> Option<ExitCode> {
+    match get_stack_values(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok((first_value, second_value)) => {
+            state.register_value = first_value.wrapping_sub(second_value)
+        }
+    };
+    advance(state);
+    Option::None
+}
+
+fn get_stack_values(state: &mut State) -> Result<(u8, u8), ExitCode> {
+    let stack = match state.direction {
+        Direction::Unselected => return Err(ExitCode::UnselectedDirection),
+        Direction::Left => &mut state.left_stack,
+        Direction::Right => &mut state.right_stack,
+    };
+    let first_value = match stack.pop() {
+        None => return Err(ExitCode::StackUnderflow),
+        Some(value) => value,
+    };
+    let second_value = match stack.pop() {
+        None => return Err(ExitCode::StackUnderflow),
+        Some(value) => value,
+    };
+    Ok((first_value, second_value))
+}
+
 fn select_left(state: &mut State) -> Option<ExitCode> {
     state.direction = Direction::Left;
     advance(state);
@@ -116,6 +155,8 @@ fn main() {
         (' ', advance),
         ('^', push),
         ('v', pop),
+        ('+', add),
+        ('-', subtract),
         ('<', select_left),
         ('>', select_right),
         ('*', increment),

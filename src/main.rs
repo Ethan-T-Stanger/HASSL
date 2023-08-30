@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     env::args,
     fs::File,
-    io::{stdin, Read},
+    io::{stdin, stdout, Read, Write},
     path::PathBuf,
 };
 
@@ -284,6 +284,15 @@ fn numeric_print(program_data: &mut ProgramData, file_contents: &Vec<char>) -> O
     Option::None
 }
 
+fn flush(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+    match stdout().flush() {
+        Err(_) => return Option::Some(ExitCode::Internal),
+        Ok(_) => (),
+    }
+    advance(program_data, file_contents);
+    Option::None
+}
+
 fn generate_random(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     program_data.register_value = random();
     advance(program_data, file_contents);
@@ -375,7 +384,6 @@ fn main() {
         ('^', push),
         ('v', pop),
         ('g', line_input),
-        ('n', numeric_print),
         ('<', select_left),
         ('>', select_right),
         ('*', increment),
@@ -384,6 +392,8 @@ fn main() {
         ('-', subtract),
         ('#', count),
         ('p', print),
+        ('n', numeric_print),
+        ('f', flush),
         ('~', generate_random),
         ('0', advance),
         ('1', advance),
@@ -411,6 +421,8 @@ fn main() {
         register_value: 0,
         selected_state: State::State0,
     };
+
+    go_to_state(&mut program_data, &file_contents);
 
     let exit_code = loop {
         if file_contents.len() < program_data.file_index + 1 {

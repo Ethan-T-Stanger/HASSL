@@ -236,13 +236,13 @@ fn main() {
     };
 
     let mut file = match File::open(&file_path) {
-        Err(why) => panic!("Failed to open file {}: {}", file_path.display(), why),
+        Err(why) => panic!("Failed to open {}: {}", file_path.display(), why),
         Ok(file) => file,
     };
 
     let mut file_contents = String::new();
     match file.read_to_string(&mut file_contents) {
-        Err(why) => panic!("Failed to read file {}: {}", file_path.display(), why),
+        Err(why) => panic!("Failed to read {}: {}", file_path.display(), why),
         Ok(_) => (),
     };
     let regex = Regex::new(r"(%.*%)").unwrap();

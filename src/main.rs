@@ -1,4 +1,10 @@
-use std::{collections::HashMap, env::args, fs::File, io::Read, path::PathBuf};
+use std::{
+    collections::HashMap,
+    env::args,
+    fs::File,
+    io::{stdin, Read},
+    path::PathBuf,
+};
 
 use rand::random;
 
@@ -8,6 +14,7 @@ enum ExitCode {
     EndOfFile,
     UnselectedDirection,
     StackUnderflow,
+    Input,
 }
 
 enum Direction {
@@ -48,6 +55,26 @@ fn pop(state: &mut State) -> Option<ExitCode> {
         Err(exit_code) => return Option::Some(exit_code),
         Ok(value) => state.register_value = value,
     };
+    advance(state);
+    Option::None
+}
+
+fn line_input(state: &mut State) -> Option<ExitCode> {
+    let stack = match get_stack(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(stack) => stack,
+    };
+    let mut input_string = String::new();
+    match stdin().read_line(&mut input_string) {
+        Err(_) => return Option::Some(ExitCode::Input),
+        Ok(_) => (),
+    };
+    input_string.chars().for_each(|char| {
+        stack.push(match u8::try_from(char) {
+            Err(_) => char::REPLACEMENT_CHARACTER as u8,
+            Ok(value) => value,
+        })
+    });
     advance(state);
     Option::None
 }
@@ -109,10 +136,12 @@ fn subtract(state: &mut State) -> Option<ExitCode> {
 fn count(state: &mut State) -> Option<ExitCode> {
     match get_stack(state) {
         Err(exit_code) => return Option::Some(exit_code),
-        Ok(stack) => state.register_value = match u8::try_from(stack.len()) {
-            Err(_) => u8::MAX,
-            Ok(value) => value,
-        },
+        Ok(stack) => {
+            state.register_value = match u8::try_from(stack.len()) {
+                Err(_) => u8::MAX,
+                Ok(value) => value,
+            }
+        }
     }
     advance(state);
     Option::None
@@ -202,16 +231,17 @@ fn main() {
         (' ', advance),
         ('^', push),
         ('v', pop),
-        ('+', add),
-        ('-', subtract),
-        ('#', count),
-        ('~', generate_random),
-        ('p', print),
+        ('g', line_input),
         ('n', numeric_print),
         ('<', select_left),
         ('>', select_right),
         ('*', increment),
         ('.', reset),
+        ('+', add),
+        ('-', subtract),
+        ('#', count),
+        ('p', print),
+        ('~', generate_random),
     ]);
 
     let mut state = State {
@@ -246,6 +276,7 @@ fn main() {
             println!("hassl-Whops!: attempted operation with unselected direction.")
         }
         ExitCode::StackUnderflow => println!("hassl-Whops!: attempted pop from empty stack."),
+        ExitCode::Input => println!("hassl-Whops!: failed to get user input."),
     }
 }
 

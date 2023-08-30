@@ -1,5 +1,7 @@
 use std::{collections::HashMap, env::args, fs::File, io::Read, path::PathBuf};
 
+use rand::random;
+
 enum ExitCode {
     Success,
     UnexpectedToken,
@@ -84,6 +86,15 @@ fn count(state: &mut State) -> Option<ExitCode> {
     Option::None
 }
 
+fn generate_random(state: &mut State) -> Option<ExitCode> {
+    match get_stack(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(stack) => stack.push(random()),
+    }
+    advance(state);
+    Option::None
+}
+
 fn print(state: &mut State) -> Option<ExitCode> {
     match get_stack_value(state) {
         Err(exit_code) => return Option::Some(exit_code),
@@ -103,7 +114,7 @@ fn print(state: &mut State) -> Option<ExitCode> {
 fn numeric_print(state: &mut State) -> Option<ExitCode> {
     match get_stack_value(state) {
         Err(exit_code) => return Option::Some(exit_code),
-        Ok(value) => print!("{}", value)
+        Ok(value) => print!("{}", value),
     }
     advance(state);
     Option::None
@@ -203,6 +214,7 @@ fn main() {
         ('+', add),
         ('-', subtract),
         ('#', count),
+        ('~', generate_random),
         ('p', print),
         ('n', numeric_print),
         ('<', select_left),

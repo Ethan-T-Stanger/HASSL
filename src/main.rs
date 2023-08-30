@@ -52,74 +52,6 @@ fn pop(state: &mut State) -> Option<ExitCode> {
     Option::None
 }
 
-fn add(state: &mut State) -> Option<ExitCode> {
-    match get_stack_values(state) {
-        Err(exit_code) => return Option::Some(exit_code),
-        Ok((first_value, second_value)) => {
-            state.register_value = first_value.wrapping_add(second_value)
-        }
-    };
-    advance(state);
-    Option::None
-}
-
-fn subtract(state: &mut State) -> Option<ExitCode> {
-    match get_stack_values(state) {
-        Err(exit_code) => return Option::Some(exit_code),
-        Ok((first_value, second_value)) => {
-            state.register_value = first_value.wrapping_sub(second_value)
-        }
-    };
-    advance(state);
-    Option::None
-}
-
-fn count(state: &mut State) -> Option<ExitCode> {
-    match get_stack(state) {
-        Err(exit_code) => return Option::Some(exit_code),
-        Ok(stack) => stack.push(match u8::try_from(stack.len()) {
-            Err(_) => 255,
-            Ok(value) => value,
-        }),
-    }
-    advance(state);
-    Option::None
-}
-
-fn generate_random(state: &mut State) -> Option<ExitCode> {
-    match get_stack(state) {
-        Err(exit_code) => return Option::Some(exit_code),
-        Ok(stack) => stack.push(random()),
-    }
-    advance(state);
-    Option::None
-}
-
-fn print(state: &mut State) -> Option<ExitCode> {
-    match get_stack_value(state) {
-        Err(exit_code) => return Option::Some(exit_code),
-        Ok(value) => print!(
-            "{}",
-            if value.is_ascii() {
-                value as char
-            } else {
-                char::REPLACEMENT_CHARACTER
-            }
-        ),
-    }
-    advance(state);
-    Option::None
-}
-
-fn numeric_print(state: &mut State) -> Option<ExitCode> {
-    match get_stack_value(state) {
-        Err(exit_code) => return Option::Some(exit_code),
-        Ok(value) => print!("{}", value),
-    }
-    advance(state);
-    Option::None
-}
-
 fn select_left(state: &mut State) -> Option<ExitCode> {
     state.direction = Direction::Left;
     advance(state);
@@ -148,6 +80,65 @@ fn reset(state: &mut State) -> Option<ExitCode> {
         Direction::Left => state.register_value % 16,
         Direction::Right => state.register_value / 16 * 16,
     };
+    advance(state);
+    Option::None
+}
+
+fn add(state: &mut State) -> Option<ExitCode> {
+    match get_stack_values(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok((first_value, second_value)) => {
+            state.register_value = first_value.wrapping_add(second_value)
+        }
+    };
+    advance(state);
+    Option::None
+}
+
+fn subtract(state: &mut State) -> Option<ExitCode> {
+    match get_stack_values(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok((first_value, second_value)) => {
+            state.register_value = first_value.wrapping_sub(second_value)
+        }
+    };
+    advance(state);
+    Option::None
+}
+
+fn count(state: &mut State) -> Option<ExitCode> {
+    match get_stack(state) {
+        Err(exit_code) => return Option::Some(exit_code),
+        Ok(stack) => state.register_value = match u8::try_from(stack.len()) {
+            Err(_) => u8::MAX,
+            Ok(value) => value,
+        },
+    }
+    advance(state);
+    Option::None
+}
+
+fn print(state: &mut State) -> Option<ExitCode> {
+    print!(
+        "{}",
+        if state.register_value.is_ascii() {
+            state.register_value as char
+        } else {
+            char::REPLACEMENT_CHARACTER
+        }
+    );
+    advance(state);
+    Option::None
+}
+
+fn numeric_print(state: &mut State) -> Option<ExitCode> {
+    print!("{}", state.register_value);
+    advance(state);
+    Option::None
+}
+
+fn generate_random(state: &mut State) -> Option<ExitCode> {
+    state.register_value = random();
     advance(state);
     Option::None
 }

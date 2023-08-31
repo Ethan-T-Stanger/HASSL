@@ -1,5 +1,5 @@
 0:
-    >g          % get user input %
+    g           % get user input %
 1:
     **$#!<!@    % if the right stack is empty: terminate, else: go to state 2 %
 2:

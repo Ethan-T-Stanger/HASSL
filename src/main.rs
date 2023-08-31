@@ -1,3 +1,5 @@
+use rand::random;
+use regex::Regex;
 use std::{
     collections::HashMap,
     env::args,
@@ -6,18 +8,13 @@ use std::{
     path::PathBuf,
 };
 
-use rand::random;
-use regex::Regex;
-
 enum ExitCode {
     Success,
-    UnexpectedToken,
     EndOfFile,
-    UnselectedDirection,
+    TokenUndefined,
+    StateUndefined,
     StackUnderflow,
-    Input,
-    Internal,
-    StateDoesNotExist,
+    InternalError,
 }
 
 enum State {
@@ -40,7 +37,6 @@ enum State {
 }
 
 enum Direction {
-    Unselected,
     Left,
     Right,
 }
@@ -100,7 +96,7 @@ fn go_to_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Opt
                 .iter()
                 .position(|c| *c == state_to_char(&program_data.selected_state))
             {
-                None => return Option::Some(ExitCode::StateDoesNotExist),
+                None => return Option::Some(ExitCode::StateUndefined),
                 Some(value) => value + 1,
             }
         }
@@ -111,7 +107,6 @@ fn go_to_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Opt
 
 fn set_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     let value = match program_data.direction {
-        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
         Direction::Left => program_data.register_value / 16,
         Direction::Right => program_data.register_value % 16,
     };
@@ -132,7 +127,7 @@ fn set_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Optio
         13 => State::StateD,
         14 => State::StateE,
         15 => State::StateF,
-        _ => return Option::Some(ExitCode::Internal),
+        _ => return Option::Some(ExitCode::InternalError),
     };
     advance(program_data, file_contents);
     Option::None
@@ -185,7 +180,7 @@ fn line_input(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Opti
     };
     let mut input_string = String::new();
     match stdin().read_line(&mut input_string) {
-        Err(_) => return Option::Some(ExitCode::Input),
+        Err(_) => return Option::Some(ExitCode::InternalError),
         Ok(_) => (),
     };
     input_string.chars().rev().for_each(|char| {
@@ -212,7 +207,6 @@ fn select_right(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Op
 
 fn increment(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     program_data.register_value = match program_data.direction {
-        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
         Direction::Left => program_data.register_value.wrapping_add(16),
         Direction::Right => {
             (program_data.register_value / 16 * 16) + ((program_data.register_value % 16 + 1) % 16)
@@ -224,7 +218,6 @@ fn increment(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Optio
 
 fn reset(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     program_data.register_value = match program_data.direction {
-        Direction::Unselected => return Option::Some(ExitCode::UnselectedDirection),
         Direction::Left => program_data.register_value % 16,
         Direction::Right => program_data.register_value / 16 * 16,
     };
@@ -289,7 +282,7 @@ fn numeric_print(program_data: &mut ProgramData, file_contents: &Vec<char>) -> O
 
 fn flush() -> Option<ExitCode> {
     match stdout().flush() {
-        Err(_) => return Option::Some(ExitCode::Internal),
+        Err(_) => return Option::Some(ExitCode::InternalError),
         Ok(_) => (),
     }
     Option::None
@@ -303,7 +296,6 @@ fn generate_random(program_data: &mut ProgramData, file_contents: &Vec<char>) ->
 
 fn get_stack(program_data: &mut ProgramData) -> Result<&mut Vec<u8>, ExitCode> {
     let stack = match program_data.direction {
-        Direction::Unselected => return Err(ExitCode::UnselectedDirection),
         Direction::Left => &mut program_data.left_stack,
         Direction::Right => &mut program_data.right_stack,
     };
@@ -339,7 +331,6 @@ fn get_stack_values(program_data: &mut ProgramData) -> Result<(u8, u8), ExitCode
 
 fn get_register_value(program_data: &mut ProgramData) -> Result<u8, ExitCode> {
     match program_data.direction {
-        Direction::Unselected => Err(ExitCode::UnselectedDirection),
         Direction::Left => Ok(program_data.register_value / 16),
         Direction::Right => Ok(program_data.register_value % 16),
     }
@@ -416,7 +407,7 @@ fn main() {
 
     let mut program_data = ProgramData {
         file_index: 0,
-        direction: Direction::Unselected,
+        direction: Direction::Right,
         left_stack: Vec::new(),
         right_stack: Vec::new(),
         register_value: 0,
@@ -434,7 +425,7 @@ fn main() {
             }
 
             let function = match commands.get(&file_contents[program_data.file_index]) {
-                None => break ExitCode::UnexpectedToken,
+                None => break ExitCode::TokenUndefined,
                 Some(function) => function,
             };
 
@@ -445,18 +436,7 @@ fn main() {
         }
     };
 
-    match exit_code {
-        ExitCode::Success => return,
-        ExitCode::UnexpectedToken => println!("hassl-err!: read an unexpected token."),
-        ExitCode::EndOfFile => println!("hassl-err!: reached the end of the file."),
-        ExitCode::UnselectedDirection => {
-            println!("hassl-err!: attempted operation with unselected direction.")
-        }
-        ExitCode::StackUnderflow => println!("hassl-err!: attempted pop from empty stack."),
-        ExitCode::Input => println!("hassl-err!: failed to get user input."),
-        ExitCode::Internal => println!("hassl-err!: an internal error occurred."),
-        ExitCode::StateDoesNotExist => println!("hassl-err!: could not find the current state."),
-    }
+    print_exit_code_message(exit_code);
 }
 
 fn get_file_path() -> Option<PathBuf> {
@@ -471,4 +451,16 @@ fn get_file_path() -> Option<PathBuf> {
     }
 
     Option::None
+}
+
+fn print_exit_code_message(exit_code: ExitCode) {
+    let prefix = "hassl-err!:";
+    match exit_code {
+        ExitCode::Success => return,
+        ExitCode::EndOfFile => eprintln!("{} end of file", prefix),
+        ExitCode::TokenUndefined => eprintln!("{} token undefined", prefix),
+        ExitCode::StateUndefined => eprintln!("{} state undefined", prefix),
+        ExitCode::StackUnderflow => eprintln!("{} stack underflow", prefix),
+        ExitCode::InternalError => eprintln!("{} internal error occurred", prefix),
+    }
 }

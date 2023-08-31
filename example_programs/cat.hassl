@@ -1,6 +1,6 @@
 0:
-    >g
+    >g          % get user input %
 1:
-    **$#!<!@
+    **$#!<!@    % if the right stack is empty: terminate, else: go to state 2 %
 2:
-    >vp.*$.&
+    >vp.*$.&    % print the top character of the stack and go to state 1 %

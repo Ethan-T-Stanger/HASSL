@@ -342,7 +342,7 @@ fn get_register_value(program_data: &mut ProgramData) -> Result<u8, ExitCode> {
     match program_data.direction {
         Direction::Unselected => Err(ExitCode::UnselectedDirection),
         Direction::Left => Ok(program_data.register_value / 16),
-        Direction::Right => Ok(program_data.register_value & 16),
+        Direction::Right => Ok(program_data.register_value % 16),
     }
 }
 

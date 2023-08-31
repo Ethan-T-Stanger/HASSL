@@ -110,7 +110,7 @@ fn main() {
         }
     };
 
-    print_exit_code_message(exit_code);
+    exit_code.handle_error();
 }
 
 fn get_file_path() -> Option<PathBuf> {
@@ -125,16 +125,4 @@ fn get_file_path() -> Option<PathBuf> {
     }
 
     Option::None
-}
-
-fn print_exit_code_message(exit_code: ExitCode) {
-    let prefix = "hassl-err!:";
-    match exit_code {
-        ExitCode::Success => return,
-        ExitCode::EndOfFile => eprintln!("{} end of file", prefix),
-        ExitCode::TokenUndefined => eprintln!("{} token undefined", prefix),
-        ExitCode::StateUndefined => eprintln!("{} state undefined", prefix),
-        ExitCode::StackUnderflow => eprintln!("{} stack underflow", prefix),
-        ExitCode::InternalError => eprintln!("{} internal error occurred", prefix),
-    }
 }

@@ -7,6 +7,20 @@ pub enum ExitCode {
     InternalError,
 }
 
+impl ExitCode {
+    pub fn handle_error(&self) {
+        let prefix = "hassl-err!:";
+        match self {
+            ExitCode::Success => return,
+            ExitCode::EndOfFile => eprintln!("{} end of file", prefix),
+            ExitCode::TokenUndefined => eprintln!("{} token undefined", prefix),
+            ExitCode::StateUndefined => eprintln!("{} state undefined", prefix),
+            ExitCode::StackUnderflow => eprintln!("{} stack underflow", prefix),
+            ExitCode::InternalError => eprintln!("{} internal error occurred", prefix),
+        }
+    }
+}
+
 pub enum State {
     State0,
     State1,

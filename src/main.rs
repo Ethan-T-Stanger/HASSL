@@ -17,6 +17,7 @@ enum ExitCode {
     StackUnderflow,
     Input,
     Internal,
+    StateDoesNotExist,
 }
 
 enum State {
@@ -99,7 +100,7 @@ fn go_to_state(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Opt
                 .iter()
                 .position(|c| *c == state_to_char(&program_data.selected_state))
             {
-                None => return Option::Some(ExitCode::Internal),
+                None => return Option::Some(ExitCode::StateDoesNotExist),
                 Some(value) => value + 1,
             }
         }
@@ -424,21 +425,25 @@ fn main() {
         selected_state: State::State0,
     };
 
-    go_to_state(&mut program_data, &file_contents);
+    let exit_code = go_to_state(&mut program_data, &file_contents);
 
-    let exit_code = loop {
-        if file_contents.len() < program_data.file_index + 1 {
-            break ExitCode::EndOfFile;
-        }
+    let exit_code = if exit_code.is_some() {
+        exit_code.unwrap()
+    } else {
+        loop {
+            if file_contents.len() < program_data.file_index + 1 {
+                break ExitCode::EndOfFile;
+            }
 
-        let function = match commands.get(&file_contents[program_data.file_index]) {
-            None => break ExitCode::UnexpectedToken,
-            Some(function) => function,
-        };
+            let function = match commands.get(&file_contents[program_data.file_index]) {
+                None => break ExitCode::UnexpectedToken,
+                Some(function) => function,
+            };
 
-        match function(&mut program_data, &file_contents) {
-            None => (),
-            Some(exit_code) => break exit_code,
+            match function(&mut program_data, &file_contents) {
+                None => (),
+                Some(exit_code) => break exit_code,
+            }
         }
     };
 
@@ -452,6 +457,7 @@ fn main() {
         ExitCode::StackUnderflow => println!("hassl-err!: attempted pop from empty stack."),
         ExitCode::Input => println!("hassl-err!: failed to get user input."),
         ExitCode::Internal => println!("hassl-err!: an internal error occurred."),
+        ExitCode::StateDoesNotExist => println!("hassl-err!: could not find the current state."),
     }
 }
 

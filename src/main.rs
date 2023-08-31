@@ -188,7 +188,7 @@ fn line_input(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Opti
         Err(_) => return Option::Some(ExitCode::Input),
         Ok(_) => (),
     };
-    input_string.chars().for_each(|char| {
+    input_string.chars().rev().for_each(|char| {
         stack.push(match u8::try_from(char) {
             Err(_) => char::REPLACEMENT_CHARACTER as u8,
             Ok(value) => value,
@@ -278,21 +278,20 @@ fn print(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<Ex
         }
     );
     advance(program_data, file_contents);
-    Option::None
+    flush()
 }
 
 fn numeric_print(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
     print!("{}", program_data.register_value);
     advance(program_data, file_contents);
-    Option::None
+    flush()
 }
 
-fn flush(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+fn flush() -> Option<ExitCode> {
     match stdout().flush() {
         Err(_) => return Option::Some(ExitCode::Internal),
         Ok(_) => (),
     }
-    advance(program_data, file_contents);
     Option::None
 }
 
@@ -396,7 +395,6 @@ fn main() {
         ('#', count),
         ('p', print),
         ('n', numeric_print),
-        ('f', flush),
         ('~', generate_random),
         ('0', advance),
         ('1', advance),

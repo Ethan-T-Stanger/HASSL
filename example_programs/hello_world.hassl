@@ -12,4 +12,5 @@
      .******>.************p   % l %
      >.****p                  % d %
      .*<.**p                  % ! %
-     fg@                      % flushes the print buffer and waits for user input before exiting the program %
+     .>*********p            % \n %
+     @                % terminate %

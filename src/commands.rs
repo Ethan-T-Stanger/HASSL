@@ -232,7 +232,7 @@ pub fn numeric_print(
     program_data: &mut ProgramData,
     file_contents: &Vec<char>,
 ) -> Option<ExitCode> {
-    print!("{}", program_data.register_value);
+    print!("{:X}", program_data.register_value);
     advance(program_data, file_contents);
     flush()
 }

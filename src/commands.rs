@@ -1,4 +1,8 @@
-use std::io::{stdin, stdout, Write};
+use std::{
+    io::{stdin, stdout, Write},
+    thread,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use rand::random;
 
@@ -235,6 +239,22 @@ pub fn numeric_print(
     print!("{:X}", program_data.register_value);
     advance(program_data, file_contents);
     flush()
+}
+
+pub fn time(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+    program_data.register_value = match program_data.start_time.duration_since(UNIX_EPOCH) {
+        Err(_) => return Option::Some(ExitCode::InternalError),
+        Ok(value) => (value.as_millis() % 256) as u8,
+    };
+    program_data.start_time = SystemTime::now();
+    advance(program_data, file_contents);
+    Option::None
+}
+
+pub fn wait(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+    thread::sleep(Duration::from_millis(program_data.register_value as u64));
+    advance(program_data, file_contents);
+    Option::None
 }
 
 fn flush() -> Option<ExitCode> {

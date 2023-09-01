@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 pub enum ExitCode {
     Success,
     EndOfFile,
@@ -52,4 +54,5 @@ pub struct ProgramData {
     pub right_stack: Vec<u8>,
     pub register_value: u8,
     pub selected_state: State,
+    pub start_time: SystemTime,
 }

@@ -4,10 +4,10 @@ mod types;
 use commands::{
     add, advance, continue_if, continue_not, count, generate_random, go_to_state, increment,
     line_input, numeric_print, pop, print, push, reset, select_left, select_right, set_state,
-    subtract, terminate,
+    subtract, terminate, time, wait,
 };
 use regex::Regex;
-use std::{collections::HashMap, env::args, fs::File, io::Read, path::PathBuf};
+use std::{collections::HashMap, env::args, fs::File, io::Read, path::PathBuf, time::SystemTime};
 use types::{Direction, ExitCode, ProgramData, State};
 
 fn main() {
@@ -60,6 +60,8 @@ fn main() {
         ('#', count),
         ('p', print),
         ('n', numeric_print),
+        ('t', time),
+        ('w', wait),
         ('~', generate_random),
         ('0', advance),
         ('1', advance),
@@ -86,6 +88,7 @@ fn main() {
         right_stack: Vec::new(),
         register_value: 0,
         selected_state: State::State0,
+        start_time: SystemTime::now(),
     };
 
     let exit_code = go_to_state(&mut program_data, &file_contents);

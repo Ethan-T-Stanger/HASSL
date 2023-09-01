@@ -6,8 +6,8 @@
     #**************!<!
     >v!^<*************!
     >vpvp@
-1:      % select the second state. set the hex values to '1'   %
+1:      % select state 2. set the hex values to '1'            %
     <.**$
     *>.*
-2:      % print. go to state 2                                 %
+2:      % print. go to the selected state.                     %
     p&

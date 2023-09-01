@@ -1,8 +1,8 @@
 % A basic "Truth Machine" implementation in HASSL.             %
 
 0:      % get user input. if stack size is not 2 OR the top of %
-        % the stack is not '0': go to state 1 - else: print 0  %
-        % and terminate                                        %
+        % the stack is not '0': go to state 1 - else: print    %
+        % '0' and terminate                                    %
     *$
     g
     #**************!<!

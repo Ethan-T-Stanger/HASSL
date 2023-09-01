@@ -1,8 +1,13 @@
-0:      % get input, if stack size is not 2 or the top of the stack %
-        % is not '0' go to state 1, else print 0 and terminate      %
-    *$g#**************!<!>v!^<*************!>vpvp@
-1:      % preparation for state 2:                                  %
-        % select the second state, set the hex values to 3 and 0    %
-    <.**$*>.*
-2:      % print and loop to the beginning of state 2                %
+0:      % get user input. if stack size is not 2 OR the top of %
+        % the stack is not '0': go to state 1 - else: print 0  %
+        % and terminate                                        %
+    *$
+    g
+    #**************!<!
+    >v!^<*************!
+    >vpvp@
+1:      % select the second state. set the hex values to '1'   %
+    <.**$
+    *>.*
+2:      % print. go to state 2                                 %
     p&

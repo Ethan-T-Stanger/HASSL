@@ -1,6 +1,8 @@
-0:
-    g           % get user input %
-1:
-    **$#!<!@    % if the right stack is empty: terminate, else: go to state 2 %
-2:
-    >vp.*$.&    % print the top character of the stack and go to state 1 %
+0:      % get user input.                                      %
+    g
+1:      % if the stack is empty: go to state 2 - else:         %
+        % terminate.                                           %
+    **$
+    #!<!@
+2:      % pop and print the popped value. go to state 1.       %
+    >vp.*$.&

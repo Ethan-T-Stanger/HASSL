@@ -4,7 +4,7 @@ mod types;
 use commands::{
     add, advance, continue_if, continue_not, count, generate_random, go_to_state, increment,
     line_input, numeric_print, pop, print, push, reset, select_left, select_right, set_state,
-    subtract, terminate, time, wait,
+    subtract, terminate, time, wait, clear,
 };
 use regex::Regex;
 use std::{collections::HashMap, env::args, fs::File, io::Read, path::PathBuf, time::SystemTime};
@@ -58,6 +58,7 @@ fn main() {
         ('+', add),
         ('-', subtract),
         ('#', count),
+        ('c', clear),
         ('p', print),
         ('n', numeric_print),
         ('t', time),

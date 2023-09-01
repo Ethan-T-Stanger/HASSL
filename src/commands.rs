@@ -1,10 +1,13 @@
+use crossterm::{
+    cursor::MoveTo,
+    terminal::{Clear, ClearType},
+};
+use rand::random;
 use std::{
     io::{stdin, stdout, Write},
     thread,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
-
-use rand::random;
 
 use crate::types::{Direction, ExitCode, ProgramData, State};
 
@@ -214,6 +217,19 @@ pub fn count(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Optio
                 Ok(value) => value,
             }
         }
+    }
+    advance(program_data, file_contents);
+    Option::None
+}
+
+pub fn clear(program_data: &mut ProgramData, file_contents: &Vec<char>) -> Option<ExitCode> {
+    match crossterm::execute!(stdout(), Clear(ClearType::All)) {
+        Err(_) => return Option::Some(ExitCode::InternalError),
+        Ok(_) => (),
+    };
+    match crossterm::execute!(stdout(), MoveTo(0, 0)) {
+        Err(_) => return Option::Some(ExitCode::InternalError),
+        Ok(_) => (),
     }
     advance(program_data, file_contents);
     Option::None

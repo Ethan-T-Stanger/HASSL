@@ -1,3 +1,5 @@
+% A basic "Hello, World!" implementation in HASSL.             %
+
 0:        % print each character of "Hello, World!\n"          %
           % individually. terminate.                           %
      ********<****p

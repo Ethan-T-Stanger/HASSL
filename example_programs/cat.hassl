@@ -1,3 +1,5 @@
+% A basic "Cat" implementation in HASSL.                       %
+
 0:      % get user input.                                      %
     g
 1:      % if the stack is empty: go to state 2 - else:         %

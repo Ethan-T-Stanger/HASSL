@@ -1,2 +1,4 @@
+% A basic infinite loop in HASSL.                              %
+
 0:      % go to state 0.                                       %
     $&
